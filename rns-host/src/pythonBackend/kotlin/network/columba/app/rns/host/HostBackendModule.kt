@@ -16,6 +16,7 @@ import network.columba.app.rns.host.persistence.CallsFromContactsGate
 import network.columba.app.rns.host.persistence.ServiceSettingsAccessor
 import network.columba.app.rns.host.rnode.KotlinRNodeBridge
 import network.columba.app.rns.host.rnode.RNodeOnlineStatusListener
+import network.columba.app.rns.host.meshtastic.KotlinMeshtasticBridge
 import network.columba.app.rns.host.usb.KotlinUSBBridge
 import tech.torlando.lxst.core.CallCoordinator
 import javax.inject.Singleton
@@ -101,6 +102,9 @@ object HostBackendModule {
                 },
             )
             it.runtime.usbBridge = KotlinUSBBridge.getInstance(context)
+            // Meshtastic: the bundled ColumbaMeshtasticInterface drives the
+            // shared :rns-meshtastic session through this bridge.
+            it.runtime.meshtasticBridge = KotlinMeshtasticBridge.getInstance(context)
         }
 
     @Provides

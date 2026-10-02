@@ -566,6 +566,12 @@ fun InterfaceManagementScreen(
                             it.copy(type = type, name = "TCP Server", mode = "full")
                         }
                     }
+                    "Meshtastic" -> {
+                        viewModel.showAddDialog()
+                        viewModel.updateConfigState {
+                            it.copy(type = type, name = "Meshtastic", mode = "full")
+                        }
+                    }
                     else -> {
                         viewModel.showAddDialog()
                         viewModel.updateConfigState { it.copy(type = type) }
@@ -1246,6 +1252,7 @@ internal fun getInterfaceTypeLabel(type: String): String =
         "TCPClient" -> "TCP Client"
         "TCPServer" -> "TCP Server"
         "RNode" -> "RNode LoRa"
+        "Meshtastic" -> "Meshtastic node"
         "UDP" -> "UDP Interface"
         "AndroidBLE" -> "Bluetooth LE"
         else -> type
@@ -1356,6 +1363,15 @@ private fun getInterfaceDescription(interfaceEntity: InterfaceEntity): String {
                 else -> ""
             }
         }
+        "Meshtastic" -> {
+            val deviceName = json.optString("target_device_name", "")
+            val address = json.optString("target_device_address", "")
+            when (json.optString("connection_mode", "ble")) {
+                "tcp" -> "WiFi · ${json.optString("tcp_host", "")}:${json.optInt("tcp_port", 4403)}"
+                "usb" -> "USB"
+                else -> "BLE · ${deviceName.ifBlank { address }}"
+            } + " · ch ${json.optInt("channel", 0)}"
+        }
         "UDP" -> {
             val listenIp = json.optString("listen_ip", "0.0.0.0")
             val listenPort = json.optInt("listen_port", 4242)
@@ -1459,6 +1475,11 @@ fun InterfaceTypeSelector(
                             title = "TCP Server",
                             description = "Accept incoming connections from other Reticulum nodes",
                             onClick = { onTypeSelected("TCPServer") },
+                        )
+                        InterfaceTypeOption(
+                            title = "Meshtastic node",
+                            description = "Experimental: carry Reticulum over a stock Meshtastic node (RNS over Meshtastic)",
+                            onClick = { onTypeSelected("Meshtastic") },
                         )
                     }
                 }

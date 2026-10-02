@@ -335,6 +335,11 @@ fun interfaceTypeIconData(type: InterfaceType): InterfaceTypeIconData? =
                 ImageVector.vectorResource(com.composables.icons.lucide.R.drawable.lucide_ic_antenna),
                 "LoRa/RNode",
             )
+        InterfaceType.MESHTASTIC ->
+            InterfaceTypeIconData(
+                ImageVector.vectorResource(com.composables.icons.lucide.R.drawable.lucide_ic_antenna),
+                "LoRa/Meshtastic",
+            )
         // Hub: same icon used for Transport Node, intentional — the
         // shared-instance interface IS the loopback hub between apps on
         // this device. Material's `Hub` reads "central distribution

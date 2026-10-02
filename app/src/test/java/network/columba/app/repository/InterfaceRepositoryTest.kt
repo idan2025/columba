@@ -1088,6 +1088,12 @@ class InterfaceRepositoryTest {
                         connectionMode = "classic",
                         networkRestriction = NetworkRestriction.CELLULAR_ONLY,
                     ) to "RNode",
+                    InterfaceConfig.Meshtastic(
+                        name = "mesh",
+                        connectionMode = "tcp",
+                        tcpHost = "192.168.1.50",
+                        networkRestriction = NetworkRestriction.CELLULAR_ONLY,
+                    ) to "Meshtastic",
                 )
 
             sources.forEachIndexed { idx, (source, type) ->
@@ -1136,7 +1142,7 @@ class InterfaceRepositoryTest {
      *     compile-checked, unlike the abstract `typeName` member.
      *
      * Forcing function for new types: `expectedTypeName` below is an exhaustive
-     * `when` with no `else`, so adding a 7th InterfaceConfig subclass fails to
+     * `when` with no `else`, so adding a new InterfaceConfig subclass fails to
      * compile here until it is handled and given a sample above — pinning the
      * expected wire value and exercising the deserializer's `else`-prone path.
      */
@@ -1156,6 +1162,14 @@ class InterfaceRepositoryTest {
                         targetDeviceAddress = "AA:BB:CC:DD:EE:FF",
                         connectionMode = "classic",
                     ),
+                    InterfaceConfig.Meshtastic(
+                        name = "mesh",
+                        connectionMode = "usb",
+                        usbVendorId = 0x239a,
+                        usbProductId = 0x810b,
+                        channelIndex = 1,
+                        hopLimit = 2,
+                    ),
                 )
 
             samples.forEachIndexed { idx, source ->
@@ -1169,6 +1183,7 @@ class InterfaceRepositoryTest {
                         is InterfaceConfig.UDP -> "UDP"
                         is InterfaceConfig.AndroidBLE -> "AndroidBLE"
                         is InterfaceConfig.RNode -> "RNode"
+                        is InterfaceConfig.Meshtastic -> "Meshtastic"
                     }
                 // Guards against a subclass's typeName override drifting from the
                 // persisted discriminator. (Unit tests run unobfuscated, so the R8

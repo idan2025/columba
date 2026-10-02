@@ -31,6 +31,13 @@ fun InterfaceEntity.isBleInterface(): Boolean {
                 true
             }
         }
+        "Meshtastic" -> {
+            try {
+                JSONObject(configJson).optString("connection_mode", "ble") == "ble"
+            } catch (e: JSONException) {
+                true
+            }
+        }
         else -> false
     }
 }
@@ -194,7 +201,7 @@ internal fun entityRidesOnIpCarrier(entity: InterfaceEntity): Boolean =
     when (entity.type) {
         "AutoInterface", "TCPClient", "TCPServer", "UDP" -> true
         "AndroidBLE" -> false
-        "RNode" -> readConnectionMode(entity.configJson) == "tcp"
+        "RNode", "Meshtastic" -> readConnectionMode(entity.configJson) == "tcp"
         else -> false
     }
 

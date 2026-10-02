@@ -247,6 +247,25 @@ internal object RnsConfigFile {
                     iface.passphrase?.let { sb.appendLine("    passphrase = $it") }
                 }
             }
+            is InterfaceConfig.Meshtastic -> {
+                // Bundled custom interface (columba_meshtastic_interface.py →
+                // ColumbaMeshtasticInterface.py, deployed by event_bridge) that
+                // drives KotlinMeshtasticBridge — the same MeshtasticSession the
+                // Kotlin backend uses.
+                sb.appendLine("    type = ColumbaMeshtasticInterface")
+                sb.appendLine("    enabled = yes")
+                sb.appendLine("    connection_mode = ${iface.connectionMode}")
+                if (iface.targetDeviceAddress.isNotBlank()) {
+                    sb.appendLine("    target_device_address = ${iface.targetDeviceAddress}")
+                }
+                if (iface.tcpHost.isNotBlank()) sb.appendLine("    tcp_host = ${iface.tcpHost}")
+                sb.appendLine("    tcp_port = ${iface.tcpPort}")
+                iface.usbVendorId?.let { sb.appendLine("    usb_vendor_id = $it") }
+                iface.usbProductId?.let { sb.appendLine("    usb_product_id = $it") }
+                sb.appendLine("    channel = ${iface.channelIndex}")
+                sb.appendLine("    hop_limit = ${iface.hopLimit}")
+                sb.appendLine("    mode = ${iface.mode}")
+            }
             is InterfaceConfig.AndroidBLE -> {
                 // Bundled custom interface (ble_modules/android_ble_interface.py
                 // → AndroidBLEInterface). RNS Transport.find_interfaces() loads

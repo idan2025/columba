@@ -39,6 +39,8 @@ enum class InterfaceType(
     TCP_SERVER("TCP Server", "TCP_SERVER"),
     BLE("BLE", "BLE"),
     RNODE("RNode", "RNODE"),
+    // Reticulum over a stock Meshtastic node (`MeshtasticInterface[name]`).
+    MESHTASTIC("Meshtastic", "MESHTASTIC"),
     // RNS shared-instance loopback. Spawned when `share_instance = yes`:
     // the host bind side is `LocalServerInterface` (`name = "Reticulum"`),
     // each connected app gets a `LocalClientInterface` whose `name` is the
@@ -87,6 +89,7 @@ enum class InterfaceType(
                 "ANDROID_BLE" to BLE,
                 "BLE" to BLE,
                 "RNODE" to RNODE,
+                "MESHTASTIC" to MESHTASTIC,
                 "SHARED_INSTANCE" to SHARED_INSTANCE,
                 "UNKNOWN" to UNKNOWN,
             )
@@ -97,8 +100,12 @@ enum class InterfaceType(
         // contains neither "BLE" nor "Bluetooth". KISSInterface is RNode's
         // serial wire framing; "lora" / "weave" cover legacy and downstream
         // LoRa interface variants that all bottom out at RNode hardware.
+        @Suppress("CyclomaticComplexMethod") // One ordered substring rule per transport; splitting hides the order.
         private fun classifyByPattern(name: String): InterfaceType =
             when {
+                // Before the "ble"/"lora" fallbacks: names like "MeshtasticInterface[BLE LoRa]"
+                // are Meshtastic, not BLE or RNode.
+                name.contains("meshtastic") -> MESHTASTIC
                 name.contains("autointerface") ||
                     name.contains("autointerfacepeer") ||
                     name.contains("auto discovery") -> AUTO

@@ -175,6 +175,24 @@ def get_rnode_bridge():
     return _rnode_bridge
 
 
+# KotlinMeshtasticBridge (Meshtastic node links + RNS_Over_Meshtastic tunnel,
+# shared with the Kotlin backend). Populated by Kotlin via
+# `set_meshtastic_bridge(...)` at runtime start, consulted by
+# `columba_meshtastic_interface.ColumbaMeshtasticInterface.__init__`.
+_meshtastic_bridge = None
+
+
+def set_meshtastic_bridge(bridge):
+    """Hand a `KotlinMeshtasticBridge` (start / send / stop / lastError) to the
+    Python-side Meshtastic interface."""
+    global _meshtastic_bridge
+    _meshtastic_bridge = bridge
+
+
+def get_meshtastic_bridge():
+    return _meshtastic_bridge
+
+
 def deploy_bundled_interfaces(storage_path):
     """Materialise bundled custom-interface .py files into RNS's configdir
     `interfaces/` (and `interfaces/drivers/`) before `Reticulum()` is built.
@@ -300,6 +318,25 @@ def deploy_bundled_interfaces(storage_path):
             flush=True,
         )
         traceback.print_exc()
+
+    # ColumbaMeshtasticInterface — same top-level-module deployment as
+    # ColumbaRNodeInterface above, renamed to match `type =
+    # ColumbaMeshtasticInterface` in RnsConfigFile. Non-fatal on failure.
+    try:
+        import columba_meshtastic_interface as _cmi_mod
+        src = inspect.getsource(_cmi_mod)
+        dest = os.path.join(interfaces_dir, "ColumbaMeshtasticInterface.py")
+        with open(dest, "w") as f:
+            f.write(src)
+        RNS.log(
+            f"event_bridge: deployed ColumbaMeshtasticInterface.py ({len(src)} bytes) to {dest}",
+            RNS.LOG_NOTICE,
+        )
+    except Exception as e:  # noqa: BLE001
+        RNS.log(
+            f"event_bridge: failed to deploy ColumbaMeshtasticInterface.py: {e}",
+            RNS.LOG_ERROR,
+        )
 
 
 def reset_reticulum_for_restart():

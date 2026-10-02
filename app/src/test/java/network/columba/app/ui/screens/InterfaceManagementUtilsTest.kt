@@ -259,6 +259,7 @@ class InterfaceManagementUtilsTest {
             legacyEntity("UDP", "{}"),
             legacyEntity("AndroidBLE", "{}"),
             legacyEntity("RNode", """{"connection_mode":"classic","target_device_name":"RNode 1"}"""),
+            legacyEntity("Meshtastic", """{"connection_mode":"ble","target_device_address":"AA:BB:CC:DD:EE:FF"}"""),
         )
 
     private fun legacyEntity(
@@ -342,6 +343,21 @@ class InterfaceManagementUtilsTest {
                         connectionMode = "usb",
                         usbDeviceId = 42,
                     ),
+            ),
+            RidesOnIpCarrierCase(
+                type = "Meshtastic",
+                connectionMode = "tcp",
+                config = InterfaceConfig.Meshtastic(name = "m-tcp", connectionMode = "tcp", tcpHost = "10.0.0.6"),
+            ),
+            RidesOnIpCarrierCase(
+                type = "Meshtastic",
+                connectionMode = "ble",
+                config = InterfaceConfig.Meshtastic(name = "m-ble", connectionMode = "ble"),
+            ),
+            RidesOnIpCarrierCase(
+                type = "Meshtastic",
+                connectionMode = "usb",
+                config = InterfaceConfig.Meshtastic(name = "m-usb", connectionMode = "usb"),
             ),
         )
 

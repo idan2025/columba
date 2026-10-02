@@ -74,6 +74,7 @@ fun InterfaceConfig.ridesOnIpCarrier(): Boolean =
         is InterfaceConfig.UDP -> true
         is InterfaceConfig.AndroidBLE -> false
         is InterfaceConfig.RNode -> connectionMode == "tcp"
+        is InterfaceConfig.Meshtastic -> connectionMode == "tcp"
     }
 
 /**

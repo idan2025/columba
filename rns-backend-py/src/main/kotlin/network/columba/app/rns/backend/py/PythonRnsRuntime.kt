@@ -224,6 +224,16 @@ class PythonRnsRuntime(
     var usbBridge: Any? = null
 
     /**
+     * `KotlinMeshtasticBridge` for the bundled ColumbaMeshtasticInterface
+     * (Meshtastic node over BLE / TCP / USB). Typed `Any?` for the same
+     * dep-direction reason as [bleBridge]; forwarded into
+     * `event_bridge.set_meshtastic_bridge(...)` at [start]. Null leaves
+     * Meshtastic interfaces offline but won't break other interfaces.
+     */
+    @Volatile
+    var meshtasticBridge: Any? = null
+
+    /**
      * Optional hook fired right after the LXMF delivery destination is
      * (re-)announced via [PythonRnsCore.triggerAutoAnnounce].
      *
@@ -376,6 +386,10 @@ class PythonRnsRuntime(
         // Reticulum() so the USB-mode interface init can resolve it.
         val usbBridgeModule = python.getModule("usb_bridge")
         usbBridgeModule.callAttr("set_usb_bridge", usbBridge)
+
+        // Hand the KotlinMeshtasticBridge to columba_meshtastic_interface.py
+        // via event_bridge. Same before-Reticulum() requirement as above.
+        eventBridge.callAttr("set_meshtastic_bridge", meshtasticBridge)
 
         // Construct the upstream Reticulum instance. RNS.Reticulum is a process
         // singleton — stop() must fully tear it down before a restart.

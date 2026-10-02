@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import network.columba.app.rns.api.model.InterfaceConfig
+import network.columba.app.rns.backend.kt.meshtastic.MeshtasticInterface
+import network.columba.app.rns.meshtastic.MeshtasticBleLink
+import network.columba.app.rns.meshtastic.MeshtasticTcpLink
+import network.columba.app.rns.meshtastic.MeshtasticUsbLink
 import network.reticulum.interfaces.auto.AutoInterface
 import network.reticulum.interfaces.tcp.TCPClientInterface
 import network.reticulum.interfaces.tcp.TCPServerInterface
@@ -356,6 +360,39 @@ internal object NativeInterfaceFactory {
         )
     }
 
+    /**
+     * Reticulum over a stock Meshtastic node. The interface connects (and
+     * reconnects) on its own coroutine after start(), so creation never blocks.
+     */
+    private fun createMeshtasticInterface(config: InterfaceConfig.Meshtastic): Any? {
+        val ctx = appContext ?: run {
+            Log.w(TAG, "Meshtastic ${config.name}: no app context")
+            return null
+        }
+        val link =
+            when (config.connectionMode) {
+                "tcp" -> MeshtasticTcpLink(config.tcpHost, config.tcpPort)
+                "usb" -> {
+                    val bridge = rnodeHostBridge ?: run {
+                        Log.w(TAG, "Meshtastic ${config.name}: USB unavailable (no host bridge)")
+                        return null
+                    }
+                    MeshtasticUsbLink("USB") {
+                        kotlinx.coroutines.runBlocking {
+                            bridge.openUsbSerial(ctx, config.usbVendorId, config.usbProductId, null)
+                        }
+                    }
+                }
+                else -> MeshtasticBleLink(ctx, config.targetDeviceAddress)
+            }
+        return MeshtasticInterface(
+            name = config.name,
+            link = link,
+            channelIndex = config.channelIndex,
+            hopLimit = config.hopLimit,
+        )
+    }
+
     private fun createInterface(config: InterfaceConfig): Any? {
         fun mapScopeToHex(scopeName: String): String =
             when (scopeName.lowercase()) {
@@ -459,6 +496,8 @@ internal object NativeInterfaceFactory {
             is InterfaceConfig.AndroidBLE -> {
                 null
             }
+
+            is InterfaceConfig.Meshtastic -> createMeshtasticInterface(config)
 
             else -> {
                 Log.w(TAG, "Unknown interface type: ${config::class.simpleName}")

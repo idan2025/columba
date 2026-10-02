@@ -145,6 +145,17 @@ data class InterfaceConfigState(
     val stAlock: String = "",
     // Long-term airtime limit % (optional)
     val ltAlock: String = "",
+    // Meshtastic fields
+    // "ble", "tcp" or "usb"
+    val meshConnectionMode: String = "ble",
+    val meshDeviceAddress: String = "",
+    val meshDeviceName: String = "",
+    val meshTcpHost: String = "",
+    val meshTcpPort: String = "4403",
+    val meshUsbVendorId: Int? = null,
+    val meshUsbProductId: Int? = null,
+    val meshChannel: String = "0",
+    val meshHopLimit: String = "3",
     // Common fields
     val mode: String = "roaming",
     // Network transport restriction: "any", "wifi_only", or "cellular_only".
@@ -171,6 +182,9 @@ data class InterfaceConfigState(
     val listenPortError: String? = null,
     val socksProxyHostError: String? = null,
     val socksProxyPortError: String? = null,
+    val meshDeviceError: String? = null,
+    val meshChannelError: String? = null,
+    val meshHopLimitError: String? = null,
 ) {
     /**
      * Whether the network-restriction selector should render for this state's interface
@@ -181,6 +195,7 @@ data class InterfaceConfigState(
         get() = when (type) {
             "AndroidBLE" -> false
             "RNode" -> connectionMode == "tcp"
+            "Meshtastic" -> meshConnectionMode == "tcp"
             else -> true
         }
 
@@ -966,6 +981,10 @@ class InterfaceManagementViewModel
                     }
                 }
 
+                "Meshtastic" -> {
+                    isValid = validateMeshtastic(config) && isValid
+                }
+
                 "TCPServer" -> {
                     // VALIDATION: Validate listen IP (0.0.0.0 or valid IP/hostname)
                     when (val ipResult = InputValidator.validateHostname(config.listenIp)) {
@@ -998,9 +1017,68 @@ class InterfaceManagementViewModel
             return isValid
         }
 
+        /** Meshtastic: the node to reach for the chosen connection, plus channel and hop limit. */
+        private fun validateMeshtastic(config: InterfaceConfigState): Boolean {
+            var isValid = true
+            var deviceError: String? = null
+            var hostError: String? = null
+            var portError: String? = null
+            when (config.meshConnectionMode) {
+                "ble" ->
+                    if (!BluetoothAdapter.checkBluetoothAddress(config.meshDeviceAddress.trim().uppercase())) {
+                        deviceError = "Pick a paired node or enter its Bluetooth address (AA:BB:CC:DD:EE:FF)"
+                    }
+                "usb" ->
+                    if (config.meshUsbVendorId == null || config.meshUsbProductId == null) {
+                        deviceError = "Plug in the node and choose it"
+                    }
+                "tcp" -> {
+                    when (val hostResult = InputValidator.validateHostname(config.meshTcpHost)) {
+                        is ValidationResult.Error -> hostError = hostResult.message
+                        is ValidationResult.Success -> Unit
+                    }
+                    when (val portResult = InputValidator.validatePort(config.meshTcpPort)) {
+                        is ValidationResult.Error -> portError = portResult.message
+                        is ValidationResult.Success -> Unit
+                    }
+                }
+            }
+            val channelError = if (config.meshChannel.toIntOrNull() !in 0..7) "Channel must be 0-7" else null
+            val hopError = if (config.meshHopLimit.toIntOrNull() !in 0..7) "Hop limit must be 0-7" else null
+            if (listOf(deviceError, hostError, portError, channelError, hopError).any { it != null }) isValid = false
+            _configState.value =
+                _configState.value.copy(
+                    meshDeviceError = deviceError,
+                    targetHostError = hostError,
+                    targetPortError = portError,
+                    meshChannelError = channelError,
+                    meshHopLimitError = hopError,
+                )
+            return isValid
+        }
+
+        private fun meshtasticConfigState(config: InterfaceConfig.Meshtastic) =
+            InterfaceConfigState(
+                name = config.name,
+                type = "Meshtastic",
+                enabled = config.enabled,
+                meshConnectionMode = config.connectionMode,
+                meshDeviceAddress = config.targetDeviceAddress,
+                meshDeviceName = config.targetDeviceName,
+                meshTcpHost = config.tcpHost,
+                meshTcpPort = config.tcpPort.toString(),
+                meshUsbVendorId = config.usbVendorId,
+                meshUsbProductId = config.usbProductId,
+                meshChannel = config.channelIndex.toString(),
+                meshHopLimit = config.hopLimit.toString(),
+                mode = config.mode,
+                networkRestriction = config.networkRestriction.value,
+            )
+
         /**
          * Convert InterfaceEntity to InterfaceConfigState for editing.
          */
+        @Suppress("LongMethod") // One branch per interface type, mirroring configStateToInterfaceConfig
         private fun entityToConfigState(entity: InterfaceEntity): InterfaceConfigState {
             val config = interfaceRepository.entityToConfig(entity)
             return when (config) {
@@ -1082,6 +1160,7 @@ class InterfaceManagementViewModel
                         networkRestriction = config.networkRestriction.value,
                     )
 
+                is InterfaceConfig.Meshtastic -> meshtasticConfigState(config)
                 else -> InterfaceConfigState() // Default for unsupported types
             }
         }
@@ -1200,6 +1279,23 @@ class InterfaceManagementViewModel
                             },
                         networkName = state.networkName.trim().ifEmpty { null },
                         passphrase = state.passphrase.trim().ifEmpty { null },
+                        networkRestriction = restriction,
+                    )
+
+                "Meshtastic" ->
+                    InterfaceConfig.Meshtastic(
+                        name = state.name.trim(),
+                        enabled = state.enabled,
+                        connectionMode = state.meshConnectionMode,
+                        targetDeviceAddress = state.meshDeviceAddress.trim().uppercase(),
+                        targetDeviceName = state.meshDeviceName.trim(),
+                        tcpHost = state.meshTcpHost.trim(),
+                        tcpPort = state.meshTcpPort.toIntOrNull() ?: 4403,
+                        usbVendorId = state.meshUsbVendorId,
+                        usbProductId = state.meshUsbProductId,
+                        channelIndex = state.meshChannel.toIntOrNull() ?: 0,
+                        hopLimit = state.meshHopLimit.toIntOrNull() ?: 3,
+                        mode = state.mode,
                         networkRestriction = restriction,
                     )
 

@@ -95,6 +95,14 @@ class InterfaceTypeTest {
     }
 
     @Test
+    fun `fromName returns MESHTASTIC for Meshtastic interface names`() {
+        assertEquals(InterfaceType.MESHTASTIC, InterfaceType.fromName("MeshtasticInterface[Meshtastic]"))
+        assertEquals(InterfaceType.MESHTASTIC, InterfaceType.fromName("MESHTASTIC"))
+        // Names containing BLE / LoRa keywords must not fall through to BLE or RNODE.
+        assertEquals(InterfaceType.MESHTASTIC, InterfaceType.fromName("MeshtasticInterface[BLE LoRa node]"))
+    }
+
+    @Test
     fun `fromName recognises legacy stored values for backwards compat`() {
         // Pre-rename DB rows on the `announces.receivingInterfaceType`
         // column will have these literal strings. The parser must still
@@ -162,7 +170,7 @@ class InterfaceTypeTest {
 
     @Test
     fun `enum values are correct`() {
-        assertEquals(7, InterfaceType.entries.size)
+        assertEquals(8, InterfaceType.entries.size)
         assertEquals(
             setOf(
                 InterfaceType.AUTO,
@@ -170,6 +178,7 @@ class InterfaceTypeTest {
                 InterfaceType.TCP_SERVER,
                 InterfaceType.BLE,
                 InterfaceType.RNODE,
+                InterfaceType.MESHTASTIC,
                 InterfaceType.SHARED_INSTANCE,
                 InterfaceType.UNKNOWN,
             ),

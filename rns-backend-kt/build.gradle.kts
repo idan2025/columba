@@ -8,7 +8,7 @@
 // `:rns-host` and is bridged in via `LxstCallBridge` so the dep edge stays
 // `:rns-host → :rns-backend-kt` (never the reverse).
 //
-// Dependency rule: `implementation(:rns-api)` only. No `:rns-host` dep.
+// Dependency rule: `implementation(:rns-api)` (+ the leaf `:rns-meshtastic`) only. No `:rns-host` dep.
 
 plugins {
     id("com.android.library")
@@ -74,6 +74,7 @@ dependencies {
     // `:reticulum`'s `api()` edge today, and through the `:rns-ipc` adapter
     // surface after A.10.
     implementation(project(":rns-api"))
+    implementation(project(":rns-meshtastic"))
 
     // Hilt
     implementation(libs.hilt)

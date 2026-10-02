@@ -147,6 +147,10 @@ dependencies {
     // directly from the :reticulum process.
     implementation(project(":data"))
 
+    // Meshtastic node links + tunnel — KotlinMeshtasticBridge exposes them to the
+    // Python backend's bundled ColumbaMeshtasticInterface.
+    implementation(project(":rns-meshtastic"))
+
     // Testing
     testImplementation(libs.junit)
     testImplementation(libs.junit.jupiter)

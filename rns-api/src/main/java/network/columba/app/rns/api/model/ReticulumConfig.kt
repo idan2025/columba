@@ -532,6 +532,57 @@ sealed class InterfaceConfig : Parcelable {
         }
     }
 
+    /**
+     * Meshtastic - Reticulum over a stock Meshtastic node (RNS_Over_Meshtastic tunnel).
+     * RNS packets are fragmented into Meshtastic packets on the RETICULUM_TUNNEL_APP port;
+     * wire-compatible with landandair/RNS_Over_Meshtastic on desktop rnsd. The node's
+     * radio settings are never changed; send pacing follows its modem preset.
+     *
+     * @param connectionMode "ble" (paired node), "tcp" (node's Wi-Fi API) or "usb" (serial)
+     * @param targetDeviceAddress Bluetooth address of the node (BLE mode)
+     * @param targetDeviceName Display name of the node (BLE mode, informational)
+     * @param tcpHost Node IP/hostname (TCP mode)
+     * @param tcpPort Node API port (TCP mode, Meshtastic default 4403)
+     * @param usbVendorId USB vendor ID (USB mode)
+     * @param usbProductId USB product ID (USB mode)
+     * @param channelIndex Meshtastic channel index (0-7) the tunnel uses
+     * @param hopLimit Meshtastic hop limit (0-7) for tunnel packets
+     */
+    data class Meshtastic(
+        override val name: String = "Meshtastic",
+        override val enabled: Boolean = true,
+        val connectionMode: String = "ble",
+        val targetDeviceAddress: String = "",
+        val targetDeviceName: String = "",
+        val tcpHost: String = "",
+        val tcpPort: Int = 4403,
+        val usbVendorId: Int? = null,
+        val usbProductId: Int? = null,
+        val channelIndex: Int = 0,
+        val hopLimit: Int = 3,
+        val mode: String = "full",
+        override val networkRestriction: NetworkRestriction = NetworkRestriction.ANY,
+    ) : InterfaceConfig() {
+        override val typeName: String get() = "Meshtastic"
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.writeInt(TAG_MESHTASTIC)
+            parcel.writeString(name)
+            parcel.writeInt(if (enabled) 1 else 0)
+            parcel.writeString(connectionMode)
+            parcel.writeString(targetDeviceAddress)
+            parcel.writeString(targetDeviceName)
+            parcel.writeString(tcpHost)
+            parcel.writeInt(tcpPort)
+            parcel.writeNullableInt(usbVendorId)
+            parcel.writeNullableInt(usbProductId)
+            parcel.writeInt(channelIndex)
+            parcel.writeInt(hopLimit)
+            parcel.writeString(mode)
+            parcel.writeParcelable(networkRestriction, flags)
+        }
+    }
+
     companion object {
         private const val TAG_AUTO_INTERFACE = 0
         private const val TAG_TCP_CLIENT = 1
@@ -539,6 +590,7 @@ sealed class InterfaceConfig : Parcelable {
         private const val TAG_UDP = 3
         private const val TAG_ANDROID_BLE = 4
         private const val TAG_TCP_SERVER = 5
+        private const val TAG_MESHTASTIC = 6
 
         @JvmField
         @Suppress(
@@ -636,6 +688,22 @@ sealed class InterfaceConfig : Parcelable {
                             mode = parcel.readString().orEmpty(),
                             networkName = parcel.readString(),
                             passphrase = parcel.readString(),
+                            networkRestriction = readNetworkRestriction(),
+                        )
+                    TAG_MESHTASTIC ->
+                        Meshtastic(
+                            name = parcel.readString().orEmpty(),
+                            enabled = parcel.readInt() != 0,
+                            connectionMode = parcel.readString().orEmpty(),
+                            targetDeviceAddress = parcel.readString().orEmpty(),
+                            targetDeviceName = parcel.readString().orEmpty(),
+                            tcpHost = parcel.readString().orEmpty(),
+                            tcpPort = parcel.readInt(),
+                            usbVendorId = parcel.readNullableInt(),
+                            usbProductId = parcel.readNullableInt(),
+                            channelIndex = parcel.readInt(),
+                            hopLimit = parcel.readInt(),
+                            mode = parcel.readString().orEmpty(),
                             networkRestriction = readNetworkRestriction(),
                         )
                     else -> error("Unknown InterfaceConfig tag: $tag")

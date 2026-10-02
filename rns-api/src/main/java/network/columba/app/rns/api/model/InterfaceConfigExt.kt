@@ -8,7 +8,7 @@ import org.json.JSONObject
  */
 @Suppress(
     "CyclomaticComplexMethod",
-    "LongMethod", // 6 type branches × per-field serialization makes this unavoidably long
+    "LongMethod", // 7 type branches × per-field serialization makes this unavoidably long
 )
 fun InterfaceConfig.toJsonString(): String =
     when (this) {
@@ -99,6 +99,22 @@ fun InterfaceConfig.toJsonString(): String =
                     put("mode", mode)
                     networkName?.let { put("network_name", it) }
                     passphrase?.let { put("passphrase", it) }
+                    putRestrictionUnlessDefault(networkRestriction, NetworkRestriction.ANY)
+                }.toString()
+
+        is InterfaceConfig.Meshtastic ->
+            JSONObject()
+                .apply {
+                    put("connection_mode", connectionMode)
+                    put("target_device_address", targetDeviceAddress)
+                    put("target_device_name", targetDeviceName)
+                    put("tcp_host", tcpHost)
+                    put("tcp_port", tcpPort)
+                    usbVendorId?.let { put("usb_vendor_id", it) }
+                    usbProductId?.let { put("usb_product_id", it) }
+                    put("channel", channelIndex)
+                    put("hop_limit", hopLimit)
+                    put("mode", mode)
                     putRestrictionUnlessDefault(networkRestriction, NetworkRestriction.ANY)
                 }.toString()
     }

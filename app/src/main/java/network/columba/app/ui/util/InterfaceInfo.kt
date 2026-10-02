@@ -108,7 +108,9 @@ internal fun categorizeInterface(
         InterfaceType.TCP_SERVER,
         -> if (isYggdrasilHost(host)) InterfaceCategory.YGGDRASIL else InterfaceCategory.TCP
         InterfaceType.BLE -> InterfaceCategory.BLUETOOTH
-        InterfaceType.RNODE -> InterfaceCategory.LORA
+        InterfaceType.RNODE,
+        InterfaceType.MESHTASTIC,
+        -> InterfaceCategory.LORA
         // Shared-instance loopback (LocalServer/Client) is host-local TCP
         // by construction — same kernel path as a 127.0.0.1 TCP socket.
         // Map-pin categorisation has no useful coordinates for it, but

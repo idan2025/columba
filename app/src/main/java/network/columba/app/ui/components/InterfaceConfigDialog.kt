@@ -130,6 +130,10 @@ fun InterfaceConfigDialog(
                     )
                 }
 
+                if (configState.type == "Meshtastic") {
+                    MeshtasticConnectionFields(configState, onConfigUpdate)
+                }
+
                 // Enabled Toggle
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -171,6 +175,7 @@ fun InterfaceConfigDialog(
                             "TCPServer" -> TCPServerFields(configState, onConfigUpdate)
                             "AndroidBLE" -> AndroidBLEFields(configState, onConfigUpdate, scrollState)
                             "RNode" -> RNodeFields(configState, onConfigUpdate)
+                            "Meshtastic" -> MeshtasticAdvancedFields(configState, onConfigUpdate)
                         }
 
                         Divider()
@@ -225,6 +230,7 @@ fun InterfaceTypeSelector(
             "TCPClient" to "TCP Client",
             "TCPServer" to "TCP Server",
             "AndroidBLE" to "Bluetooth LE",
+            "Meshtastic" to "Meshtastic node",
         )
 
     ExposedDropdownMenuBox(

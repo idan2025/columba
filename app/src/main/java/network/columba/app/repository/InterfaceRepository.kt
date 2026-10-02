@@ -443,6 +443,36 @@ class InterfaceRepository
                         )
                     }
 
+                    "Meshtastic" -> {
+                        val connectionMode = json.optString("connection_mode", "ble")
+                        val tcpPort = json.optInt("tcp_port", 4403)
+                        if (tcpPort !in 1..65535) {
+                            Log.e(TAG, "Invalid Meshtastic TCP port in database: $tcpPort")
+                            error("Invalid Meshtastic TCP port: $tcpPort")
+                        }
+                        val channel = json.optInt("channel", 0)
+                        val hopLimit = json.optInt("hop_limit", 3)
+                        if (channel !in 0..7 || hopLimit !in 0..7) {
+                            Log.e(TAG, "Invalid Meshtastic channel/hop limit in database: $channel/$hopLimit")
+                            error("Invalid Meshtastic channel or hop limit")
+                        }
+                        InterfaceConfig.Meshtastic(
+                            name = entity.name,
+                            enabled = entity.enabled,
+                            connectionMode = connectionMode,
+                            targetDeviceAddress = json.optString("target_device_address", ""),
+                            targetDeviceName = json.optString("target_device_name", ""),
+                            tcpHost = json.optString("tcp_host", ""),
+                            tcpPort = tcpPort,
+                            usbVendorId = if (json.has("usb_vendor_id")) json.getInt("usb_vendor_id") else null,
+                            usbProductId = if (json.has("usb_product_id")) json.getInt("usb_product_id") else null,
+                            channelIndex = channel,
+                            hopLimit = hopLimit,
+                            mode = json.optString("mode", "full"),
+                            networkRestriction = parseRestriction(json, defaultForType = NetworkRestriction.ANY),
+                        )
+                    }
+
                     else -> {
                         Log.e(TAG, "Unknown interface type in database: ${entity.type}")
                         throw IllegalArgumentException("Unknown interface type: ${entity.type}")

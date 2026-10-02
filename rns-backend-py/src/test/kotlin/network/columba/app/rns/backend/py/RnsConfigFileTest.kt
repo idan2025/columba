@@ -17,6 +17,30 @@ class RnsConfigFileTest {
         )
 
     @Test
+    fun `meshtastic renders the bundled ColumbaMeshtasticInterface section`() {
+        val mesh =
+            InterfaceConfig.Meshtastic(
+                name = "Mesh Node",
+                connectionMode = "usb",
+                usbVendorId = 0x239a,
+                usbProductId = 0x810b,
+                channelIndex = 1,
+                hopLimit = 2,
+            )
+        val out = RnsConfigFile.build(cfg(listOf(mesh)))
+        assertTrue(out.contains("[[Mesh Node]]"))
+        assertTrue(out.contains("type = ColumbaMeshtasticInterface"))
+        assertTrue(out.contains("connection_mode = usb"))
+        assertTrue(out.contains("usb_vendor_id = 9114"))
+        assertTrue(out.contains("usb_product_id = 33035"))
+        assertTrue(out.contains("channel = 1"))
+        assertTrue(out.contains("hop_limit = 2"))
+        // Unset BLE address / TCP host stay out of the section.
+        assertFalse(out.contains("target_device_address"))
+        assertFalse(out.contains("tcp_host"))
+    }
+
+    @Test
     fun `own-instance render sets share_instance no and includes interfaces`() {
         val out = RnsConfigFile.build(cfg())
         assertTrue(out.contains("share_instance = No"))

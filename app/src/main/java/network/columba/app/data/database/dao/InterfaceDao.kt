@@ -103,7 +103,7 @@ interface InterfaceDao {
 
     /**
      * Check if any Bluetooth-requiring interface is enabled.
-     * This includes AndroidBLE and RNode interfaces (except RNode in TCP mode, which uses network connections).
+     * This includes AndroidBLE, RNode and Meshtastic interfaces (except RNode/Meshtastic in TCP or USB mode).
      *
      * @return Flow emitting true if any Bluetooth-requiring interface is enabled
      */
@@ -112,7 +112,7 @@ interface InterfaceDao {
             interfaces.any { it.requiresBluetooth() }
         }
 
-    @Query("SELECT * FROM interfaces WHERE enabled = 1 AND (type = 'AndroidBLE' OR type = 'RNode')")
+    @Query("SELECT * FROM interfaces WHERE enabled = 1 AND (type = 'AndroidBLE' OR type = 'RNode' OR type = 'Meshtastic')")
     fun getEnabledBluetoothCandidates(): Flow<List<InterfaceEntity>>
 
     /**
@@ -200,6 +200,13 @@ private fun InterfaceEntity.requiresBluetooth(): Boolean =
                 mode != "tcp" && mode != "usb"
             } catch (e: JSONException) {
                 // Malformed JSON defaults to requiring Bluetooth (conservative fallback)
+                true
+            }
+        }
+        "Meshtastic" -> {
+            try {
+                JSONObject(configJson).optString("connection_mode", "ble") == "ble"
+            } catch (e: JSONException) {
                 true
             }
         }

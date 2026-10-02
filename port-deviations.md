@@ -42,3 +42,38 @@ unrestricted IP interfaces stay up while Wi-Fi-only and cellular-only interfaces
 safely filtered out. If Android exposes a deterministic underlying transport on the same
 default-network capabilities, that underlying transport wins. `NONE` is reserved for the
 absence of a live default route.
+
+---
+
+## `InterfaceConfig.Meshtastic` (Columba-only)
+
+A `Meshtastic` interface type runs Reticulum through a stock Meshtastic node, over
+Bluetooth LE, the node's Wi-Fi API (TCP 4403) or USB serial. Upstream RNS has no
+Meshtastic interface; the closest reference is the third-party custom interface
+[landandair/RNS_Over_Meshtastic](https://github.com/landandair/RNS_Over_Meshtastic)
+for desktop `rnsd`, and this implementation is wire-compatible with it: same
+`RETICULUM_TUNNEL_APP` port, same `[index u8][pos i8] + chunk` fragments (checked
+byte-for-byte against its `PacketHandler` output in `MeshtasticTest`), same `REQ`
+resend requests, same per-preset send pacing. Python `rnsd` nodes running that
+interface and Columba reach each other over the air.
+
+The protocol code lives in `:rns-meshtastic` (`MeshtasticSession`, node links, the
+client-API protobuf subset, `RnsTunnel`) and is shared by both backends:
+`:rns-backend-kt` wraps it as a reticulum-kt `Interface`; the Python backend's bundled
+`ColumbaMeshtasticInterface` drives it through `KotlinMeshtasticBridge` (the
+`meshtastic` Python package can't reach serial or BLE under Chaquopy).
+
+**Deliberate differences from the reference interface:**
+- Replies to link traffic are sent unicast to the node the link lives behind (the
+  reference tries to, but its check compares against the class, so it always broadcasts).
+- A packet is reassembled once every fragment is in, even when the last fragment
+  arrived before a resent middle one (the reference drops it).
+- The node's radio config is never written; pacing follows the node's own preset
+  (the reference rewrites the preset to its `data_speed` setting).
+- Only tunnel packets on the configured channel, addressed to this node or broadcast,
+  are accepted.
+
+**Justification.** Meshtastic nodes are common hardware; this lets their owners carry
+Reticulum traffic without reflashing, alongside (not instead of) RNode. It is opt-in
+and off the default interface set. Hop limit defaults to 3 and the UI explains that
+higher values make every relay on the channel retransmit the traffic.
